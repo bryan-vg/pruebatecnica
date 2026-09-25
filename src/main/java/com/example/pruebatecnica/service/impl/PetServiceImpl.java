@@ -3,9 +3,6 @@ package com.example.pruebatecnica.service.impl;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -20,6 +17,9 @@ import com.example.pruebatecnica.exception.RemoteApiCallException;
 import com.example.pruebatecnica.service.PetService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 @Service
 public class PetServiceImpl implements PetService{
 
@@ -37,18 +37,15 @@ public class PetServiceImpl implements PetService{
     @Override
     public Pet getPetById(Integer petId){
         try{
-            // request https://petstore.swagger.io/#/
-
-            // throw not found exception if api call result is null
             String petRetrievalResult = this.restClient.retrievePetById(petId);
             if(petRetrievalResult == null){
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No pet found");
             }
             Pet resultPet = objectMapper.readValue(petRetrievalResult, Pet.class);
-            System.out.println("Parsed pet values: " + resultPet.toString());
+            log.info("Parsed pet values: " + resultPet.toString());
             return resultPet;
         }catch(IOException e){
-            System.out.println("Unexpected error in the external API read call");
+            log.error("Unexpected error in the external API read call");
             throw new RemoteApiCallException("Unexpected error in the external API read call", e);
         }
     }
@@ -56,19 +53,19 @@ public class PetServiceImpl implements PetService{
     @Override
     public PetSaveResponse saveNewPet(PetSaveRequest petSaveRequest){
         try{
+            log.info("Pet to be stored: " + petSaveRequest.toString());
             String petSaveResult = this.restClient.savePet(petSaveRequest.id(), petSaveRequest.status(), petSaveRequest.name());
-            Pet resultPet = objectMapper.readValue(petSaveResult, Pet.class);
-            UUID uuid = UUID.randomUUID();
+            Pet resultPet = objectMapper.readValue(petSaveResult, Pet.class);            
             
             PetSaveResponse petSaveResponse = new PetSaveResponse(
                 UUID.randomUUID().toString(), 
                 LocalDateTime.now().format(SYSTEM_TIMEZON_FORMATTER), 
                 true, 
                 resultPet.name());
-            System.out.println("saved pet response: " + petSaveResponse.toString());
+            log.info("saved pet response: " + petSaveResponse.toString());
             return petSaveResponse;
         }catch(IOException e){
-            System.out.println("Unexpected error in the external API save call");
+            log.error("Unexpected error in the external API save call");
             throw new RemoteApiCallException("Unexpected error in the external API save call", e);
         }
     }

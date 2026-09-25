@@ -12,6 +12,9 @@ import okhttp3.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 @Component
 public class RestClient {
 
@@ -25,7 +28,7 @@ public class RestClient {
 
     public String retrievePetById(Integer petId) throws IOException{
         if (petId == null || petId <= 0) {
-            System.out.println("Pet Id must be a positive number");
+            log.error("Pet Id must be a positive number");
             throw new IllegalArgumentException("Pet Id must be a positive number");
         }
         
@@ -39,18 +42,18 @@ public class RestClient {
 
         try(Response response = this.okHttpClient.newCall(request).execute()){
             if(!response.isSuccessful()){
-                System.out.println("Failed pet retrieval. Response code " + response.code());
+                log.info("Failed pet retrieval. Response code " + response.code());
                 if(response.code() == 404){
-                    System.out.println("Couldn't find a Pet");
+                    log.info("Couldn't find a Pet");
                     return null;
                 }
                 if(response.body() == null){
-                    System.out.println("Unexpected result from pet API call");
+                    log.info("Unexpected result from pet API call");
                     throw new IOException("Unexpected API call result");
                 }
             }
             String responseBody = response.body().string();
-            System.out.println("Successful pet retrieval: " + responseBody);
+            log.info("Successful pet retrieval: " + responseBody);
             return responseBody;
         }
     }
@@ -74,10 +77,10 @@ public class RestClient {
         try(Response response = this.okHttpClient.newCall(request).execute()){
             if(response.isSuccessful() && response.body() != null){
                 String responseBody = response.body().string();
-                System.out.println("Successfully stored a pet. Response: " + responseBody);
+                log.info("Successfully stored a pet. Response: " + responseBody);
                 return responseBody;
             }else{
-                System.out.println("Unexpected result from save pet API call");
+                log.error("Unexpected result from save pet API call");
                 throw new IOException("Unexpected save API call result");
             }
         }
